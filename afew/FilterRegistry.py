@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: ISC
 # Copyright (c) Justus Winter <4winter@informatik.uni-hamburg.de>
 
-import pkg_resources
-
 RAISEIT = object()
 
 
@@ -51,7 +49,12 @@ class FilterRegistry:
         return self.filter.items()
 
 
-all_filters = FilterRegistry(pkg_resources.iter_entry_points('afew.filter'))
+try:
+    from importlib.metadata import entry_points
+    all_filters = FilterRegistry(entry_points().select(group='afew.filter'))
+except ImportError:
+    import pkg_resources
+    all_filters = FilterRegistry(pkg_resources.iter_entry_points('afew.filter'))
 
 
 def register_filter(klass):
