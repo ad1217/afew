@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: ISC
 # Copyright (c) 2013 Patrick Gerken <do3cc@patrick-gerken.de>
 
+from importlib.metadata import EntryPoint
 import unittest
 
 
@@ -13,13 +14,11 @@ class TestFilterRegistry(unittest.TestCase):
     def test_entry_point_registration(self):
         from afew import FilterRegistry
 
-        class FakeRegistry:
-            name = 'test'
-
+        class FakeEntryPoint(EntryPoint):
             def load(self):
-                return 'class'
+                return self.value
 
-        registry = FilterRegistry.FilterRegistry([FakeRegistry()])
+        registry = FilterRegistry.FilterRegistry([FakeEntryPoint(name='test', value='class', group='')])
 
         self.assertEqual('class', registry['test'])
 

@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: ISC
 # Copyright (c) Justus Winter <4winter@informatik.uni-hamburg.de>
 
+from importlib.metadata import entry_points, EntryPoint
+
 RAISEIT = object()
 
 
@@ -14,21 +16,19 @@ class FilterRegistry:
     """
 
     def __init__(self, filters):
-        self._filteriterator = filters
-
-    @property
-    def filter(self):
-        if not hasattr(self, '_filter'):
-            self._filter = {}
-            for f in self._filteriterator:
-                self._filter[f.name] = f.load()
-        return self._filter
+        self.filter = {f.name: f for f in filters}
 
     def get(self, key, default=RAISEIT):
-        if default == RAISEIT:
+        if default == RAISEIT or key in self.filter:
+            filter = self.filter[key]
+        else:
+            return default
+
+        if isinstance(filter, EntryPoint):
+            self.filter[key] = filter.load()
             return self.filter[key]
         else:
-            return self.filter.get(key, default)
+            return filter
 
     def __getitem__(self, key):
         return self.get(key)
@@ -42,19 +42,8 @@ class FilterRegistry:
     def keys(self):
         return self.filter.keys()
 
-    def values(self):
-        return self.filter.values()
 
-    def items(self):
-        return self.filter.items()
-
-
-try:
-    from importlib.metadata import entry_points
-    all_filters = FilterRegistry(entry_points().select(group='afew.filter'))
-except ImportError:
-    import pkg_resources
-    all_filters = FilterRegistry(pkg_resources.iter_entry_points('afew.filter'))
+all_filters = FilterRegistry(entry_points().select(group='afew.filter'))
 
 
 def register_filter(klass):
